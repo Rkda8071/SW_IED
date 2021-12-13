@@ -6,7 +6,7 @@
 
 // configurable parameters
 #define _DUTY_MIN 553 // servo full clockwise position (0 degree)
-#define _DUTY_NEU 1376 // servo neutral position (90 degree)
+#define _DUTY_NEU 1320 // servo neutral position (90 degree)
 #define _DUTY_MAX 2399 // servo full counterclockwise position (180 degree)
 
 #define _SERVO_SPEED 100 // servo speed limit (unit: degree/second)
@@ -19,7 +19,7 @@ float pause_time; // unit: sec
 Servo myservo;
 float duty_target, duty_curr, dist_raw, dist_mod = 255;
 float a = 86, b = 450;
-float _KP = 0.7,_KD = 90;
+float _KP = 0.4,_KD = 100;
 float error_prev, error_curr;
 
 void setup() {
