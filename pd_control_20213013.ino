@@ -17,9 +17,9 @@ float duty_chg_per_interval; // maximum duty difference per interval
 float toggle_interval, toggle_interval_cnt;
 float pause_time; // unit: sec
 Servo myservo;
-float duty_target, duty_curr, dist_raw;
+float duty_target, duty_curr, dist_raw, dist_mod = 255;
 float a = 86, b = 450;
-float _KP = 1.1,_KD = 35;
+float _KP = 0.7,_KD = 90;
 float error_prev, error_curr;
 
 void setup() {
@@ -56,6 +56,7 @@ float ir_distance(void){ // return value unit: mm
 void loop() {
     float raw_dist = ir_distance();
     float dist_cali = 150 + 300.0 / (b - a) * (raw_dist - a);
+    dist_mod = dist_cali * 0.7 + dist_mod * 0.3;
     //if(millis() < last_sampling_time + INTERVAL) return;
 
   // adjust duty_curr toward duty_target by duty_chg_per_interval
@@ -70,7 +71,7 @@ void loop() {
   myservo.writeMicroseconds(duty_curr);
   
   error_curr = dist_cali;
-  float pterm = _KP * (305 - dist_cali);
+  float pterm = _KP * (255 - dist_cali);
   float dterm = _KD * (error_curr - error_prev);
   float control = pterm - dterm;
   duty_target = _DUTY_NEU + control;
