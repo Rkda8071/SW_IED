@@ -6,13 +6,15 @@
 
 // configurable parameters
 #define _DUTY_MIN 553 // servo full clockwise position (0 degree)
-#define _DUTY_NEU 1300 // servo neutral position (90 degree)
+#define _DUTY_NEU 1325 // servo neutral position (90 degree)
 #define _DUTY_MAX 2399 // servo full counterclockwise position (180 degree)
 
 #define _SERVO_SPEED 100 // servo speed limit (unit: degree/second)
 #define INTERVAL 20  // servo update interval
 
-unsigned long last_sampling_time; // unit: ms
+#define _INTERVAL_SERIAL 100
+
+unsigned long last_sampling_time, last_serial_time; // unit: ms
 float duty_chg_per_interval; // maximum duty difference per interval
 float toggle_interval, toggle_interval_cnt;
 float pause_time; // unit: sec
@@ -59,7 +61,7 @@ void loop() {
     float dist_cali = 100 + 300.0 / (b - a) * (raw_dist - a);
     //dist_mod = dist_cali * 0.6 + dist_mod * 0.4;
     //dist_cali = dist_mod;
-    //if(millis() < last_sampling_time + INTERVAL) return;
+    if(millis() < last_sampling_time + INTERVAL) return;
 
   // adjust duty_curr toward duty_target by duty_chg_per_interval
   if(duty_target > duty_curr) {
@@ -77,10 +79,10 @@ void loop() {
   dterm = _KD * (error_curr - error_prev);
   iterm += _KI * error_curr;
   float control = pterm + dterm + iterm;
-  control = control * 0.6 + prev * 0.4;
+  control = control * 0.7 + prev * 0.3;
   if(245 <= dist_cali && dist_cali <= 265){
-    //iterm *= 0.999;
-    control *= 0.1;
+    iterm *= 0.999;
+    control *= 0.2;
   }
   duty_target = _DUTY_NEU + control;
 
@@ -88,7 +90,7 @@ void loop() {
   if(duty_target > _DUTY_MAX) duty_target = _DUTY_MAX;
   error_prev = error_curr;
   prev = control;
-  
+  if(millis() >= last_serial_time + _INTERVAL_SERIAL){
      Serial.print("IR:"); //[2983] “Min:0,Low:200,dist:” 문구 출력
      Serial.print(dist_cali);
      Serial.print(",T:"); //[2983] “Min:0,Low:200,dist:” 문구 출력
@@ -104,7 +106,8 @@ void loop() {
      Serial.print(",DTC:"); // [2980] “duty_curr” 출력
      Serial.print(map(duty_curr, 1000, 2000, 410, 510)); // [2980] duty_curr 값 출력
      Serial.println(",-G:245,+G:265,m:0,M:800");
-
+     last_serial_time += _INTERVAL_SERIAL;
+  }
   /*if(dist_cali > 255) //멀다
     duty_target = _DUTY_NEU - 125;//(_DUTY_MIN + _DUTY_NEU) / 2;
   else //가깝다
